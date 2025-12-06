@@ -2,10 +2,10 @@
 
 Este projeto implementa uma **arquitetura mínima de ponto flutuante** e um **emulador em Python** capaz de executar pequenos programas em assembly para computação numérica:
 
-- `sin(x)` via série de Taylor  
-- `cos(x)` via série de Taylor  
-- `x^(1/n)` via método de Newton  
-- `log_b(x)` via aproximação de `ln`  
+- $\sin(x)$ via série de Taylor  
+- $\cos(x)$ via série de Taylor  
+- $x^{1/n}$ via método de Newton  
+- $\log_b(x)$ via aproximação de $\ln$  
 
 Tudo usando uma **ISA reduzida**, com apenas algumas instruções aritméticas, de memória e desvio condicional.
 
@@ -14,18 +14,16 @@ Tudo usando uma **ISA reduzida**, com apenas algumas instruções aritméticas, 
 ## 1. Estrutura do Projeto
 
 ```text
-trabalho_isa/
+fp_isa_emulator/
 ├─ cpu.py                # Emulador da CPU e da ISA mínima
 ├─ main.py               # Programa principal com menu interativo
 ├─ programs/
 │  ├─ sin.asm            # Cálculo de sin(x) por série de Taylor
 │  ├─ cos.asm            # Cálculo de cos(x) por série de Taylor
-│  ├─ raiz.asm           # Cálculo de x^(1/n) por Newton (arquivo usado: root.asm)
+│  ├─ root.asm           # Cálculo de x^(1/n) por Newton
 │  └─ log.asm            # Cálculo de log_b(x) via ln(x)/ln(b)
 └─ README.md             # Este arquivo
 ````
-
-> Observação: no código, o arquivo de raiz é aberto como `root.asm`, mas o conteúdo abaixo é o mesmo mostrado em `raiz.asm`.
 
 ---
 
@@ -160,7 +158,7 @@ Método `load_program(asm_source: str)`:
    * O código conta apenas linhas de instrução (não conta labels) e registra:
 
      ```python
-     self.labels["nome_do_label"] = índice_da_instrução
+     self.labels["nome_do_label"] = indice_da_instrucao
      ```
 
 2. **Segunda passada**: parse das instruções.
@@ -238,26 +236,28 @@ Todos os programas seguem o mesmo padrão:
 * Resultado principal em `MEM[10]`.
 * No caso de `log.asm`, também usa `MEM[11]` e `MEM[12]` para intermediários/resultados.
 
-### 6.1. `sin.asm` – Série de Taylor para `sin(x)`
+### 6.1. `sin.asm` – Série de Taylor para $\sin(x)$
 
 Implementa:
 
-[
+$$
 \sin(x) \approx \sum_{k=0}^{N-1} t_k
-]
+$$
+
 com:
-[
-t_0 = x, \quad
+
+$$
+t_0 = x, \qquad
 t_{k+1} = -,t_k \cdot \frac{x^2}{(2k+2)(2k+3)}
-]
+$$
 
 **Convenções de memória:**
 
-* `MEM[0]` → `x` (entrada).
-* `MEM[1]` → `N` (número de termos).
-* `MEM[10]` → `sin(x)` aproximado (saída).
+* `MEM[0]` → $x$ (entrada).
+* `MEM[1]` → $N$ (número de termos).
+* `MEM[10]` → $\sin(x)$ aproximado (saída).
 
-Trecho principal (já simplificado):
+Trecho principal (simplificado):
 
 ```asm
 LOAD R0, [0]        ; x
@@ -272,85 +272,89 @@ LOAD R6, [1]        ; N
 STORE R2, [10]      ; resultado final
 ```
 
-### 6.2. `cos.asm` – Série de Taylor para `cos(x)`
+### 6.2. `cos.asm` – Série de Taylor para $\cos(x)$
 
 Implementa:
 
-[
+$$
 \cos(x) \approx \sum_{k=0}^{N-1} t_k
-]
+$$
+
 com:
-[
-t_0 = 1, \quad
+
+$$
+t_0 = 1, \qquad
 t_{k+1} = -,t_k \cdot \frac{x^2}{(2k+1)(2k+2)}
-]
+$$
 
 **Convenções de memória:**
 
-* `MEM[0]` → `x` (entrada).
-* `MEM[1]` → `N` (número de termos).
-* `MEM[10]` → `cos(x)` aproximado (saída).
+* `MEM[0]` → $x$ (entrada).
+* `MEM[1]` → $N$ (número de termos).
+* `MEM[10]` → $\cos(x)$ aproximado (saída).
 
-### 6.3. `raiz.asm` / `root.asm` – `x^(1/n)` por Newton
+### 6.3. `root.asm` – $x^{1/n}$ por Newton
 
 Resolve:
 
-[
+$$
 y = x^{1/n}
-]
+$$
 
 Usando método de Newton para a equação:
 
-[
+$$
 f(y) = y^n - x = 0
-]
+$$
 
-A iteração é:
+A iteração usada é:
 
-[
+$$
 y_{k+1} = \frac{1}{n}\left((n-1),y_k + \frac{x}{y_k^{n-1}}\right)
-]
+$$
 
 **Convenções de memória:**
 
-* `MEM[0]` → `x` (entrada).
-* `MEM[1]` → `n` (ordem da raiz).
-* `MEM[2]` → `N_iter` (número de iterações).
-* `MEM[10]` → `x^(1/n)` aproximado (saída).
+* `MEM[0]` → $x$ (entrada).
+* `MEM[1]` → $n$ (ordem da raiz).
+* `MEM[2]` → $N_{\text{iter}}$ (número de iterações).
+* `MEM[10]` → $x^{1/n}$ aproximado (saída).
 
-### 6.4. `log.asm` – `log_b(x)` via séries de `ln`
+### 6.4. `log.asm` – $\log_b(x)$ via séries de $\ln$
 
 Implementa:
 
-[
+$$
 \log_b(x) = \frac{\ln(x)}{\ln(b)}
-]
+$$
 
-Usando a série:
+Usando a expansão em série em torno de $z \approx 1$:
 
-[
-\ln(z) = 2 \sum_{k=0}^{N-1} \frac{t_k}{1}
-]
-onde:
-[
-t_0 = \frac{z-1}{z+1}, \quad
-t_{k+1} = t_k \cdot t^2 \cdot \frac{2k+1}{2k+3}, \quad t = \frac{z-1}{z+1}
-]
+$$
+\ln(z) = 2 \sum_{k=0}^{N-1} t_k
+$$
+
+com:
+
+$$
+t_0 = \frac{z-1}{z+1}, \qquad
+t_{k+1} = t_k \cdot t^2 \cdot \frac{2k+1}{2k+3}, \qquad t = \frac{z-1}{z+1}
+$$
 
 A implementação faz:
 
-1. Calcula `ln(x)` com N termos: resultado em `MEM[10]`.
-2. Calcula `ln(b)` com N termos: resultado em `MEM[11]`.
-3. Calcula `log_b(x) = ln(x)/ln(b)`: resultado final em `MEM[12]`.
+1. Calcula $\ln(x)$ com $N$ termos: resultado em `MEM[10]`.
+2. Calcula $\ln(b)$ com $N$ termos: resultado em `MEM[11]`.
+3. Calcula $\log_b(x) = \ln(x) / \ln(b)$: resultado final em `MEM[12]`.
 
 **Convenções de memória:**
 
-* `MEM[0]` → `x` (entrada).
-* `MEM[1]` → `b` (base).
-* `MEM[2]` → `N_termos` da série de `ln`.
-* `MEM[10]` → `ln(x)` aproximado.
-* `MEM[11]` → `ln(b)` aproximado.
-* `MEM[12]` → `log_b(x)` final.
+* `MEM[0]` → $x$ (entrada).
+* `MEM[1]` → $b$ (base).
+* `MEM[2]` → $N_{\text{termos}}$ da série de $\ln$.
+* `MEM[10]` → $\ln(x)$ aproximado.
+* `MEM[11]` → $\ln(b)$ aproximado.
+* `MEM[12]` → $\log_b(x)$ final.
 
 ---
 
@@ -372,7 +376,7 @@ def dump_state(cpu: CPU):
 
 Isso permite:
 
-* Ver quais registradores foram usados para armazenar intermediários (por exemplo, `x^2`, termo atual da série, contador `k`, etc.).
+* Ver quais registradores foram usados para armazenar intermediários (por exemplo, $x^2$, termo atual da série, contador $k$, etc.).
 * Conferir onde estão resultados parciais na memória.
 * Usar essas informações no relatório para **explicar o fluxo da execução** da ISA.
 
@@ -390,7 +394,7 @@ Isso permite:
 1. Certifique-se de que a estrutura de pastas está assim:
 
    ```text
-   trabalho_isa/
+   fp_isa_emulator/
    ├─ cpu.py
    ├─ main.py
    ├─ programs/
@@ -400,10 +404,10 @@ Isso permite:
    │  └─ log.asm
    ```
 
-2. Abra um terminal na pasta `trabalho_isa`:
+2. Abra um terminal na pasta do projeto:
 
    ```bash
-   cd caminho/para/trabalho_isa
+   cd caminho/para/fp_isa_emulator
    ```
 
 3. Execute:
@@ -467,15 +471,15 @@ valor real (math.pow): 4.0
 Algumas ideias de evolução do projeto:
 
 * Adicionar **mais instruções** à ISA (por exemplo, `NEG`, `ABS`, `NOP`).
-* Implementar **redução de argumento** para melhorar a precisão de `sin`/`cos` para valores grandes.
-* Adicionar **testes automatizados** em Python (por exemplo, testar diversos valores de `x`, `n`, `b`, `N_termos` e comparar erros).
+* Implementar **redução de argumento** para melhorar a precisão de $\sin$/$\cos$ para valores grandes.
+* Adicionar **testes automatizados** em Python (por exemplo, testar diversos valores de $x$, $n$, $b$, $N$ e comparar erros).
 * Gerar tabelas/gráficos de **erro relativo** em função de:
 
   * Número de termos/iterações.
   * Valor da entrada.
 
-Essas extensões são boas para discussão de trade-offs entre:
+Essas extensões são boas para discutir trade-offs entre:
 
 * simplicidade da arquitetura,
-* tamanhos de programas em assembly,
+* tamanho dos programas em assembly,
 * precisão numérica.
