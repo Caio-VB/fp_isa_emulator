@@ -1,4 +1,3 @@
-````markdown
 # Emulador de ISA Mínima de Ponto Flutuante
 
 Este projeto implementa uma **arquitetura mínima de ponto flutuante** e um **emulador em Python** capaz de executar pequenos programas em assembly para computação numérica:
@@ -480,5 +479,3 @@ Essas extensões são boas para discussão de trade-offs entre:
 * simplicidade da arquitetura,
 * tamanhos de programas em assembly,
 * precisão numérica.
-
----
